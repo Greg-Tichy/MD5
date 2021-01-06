@@ -58,6 +58,13 @@ namespace MD5
             const int capacity = 1024 * 1024 * 1024;
             const int lenToTest = 5;
             var work = new Work(salt);
+            foreach (var g in work.GenerateAny(1))
+            {
+                Console.Write($"{Encoding.UTF8.GetString(g)} ");
+            }
+
+            return;
+
             var dictionaries = new List<Dictionary<byte[], string>>
             {
                 new Dictionary<byte[], string>(capacity: capacity, new ByteArrayComparer())
@@ -146,7 +153,7 @@ namespace MD5
         }
         public IEnumerable<byte> Values()
         {
-            byte result = (byte)(Convert.ToByte('0') - 1);
+            byte result = (byte)(Convert.ToByte('0') - 1);  // -1 because of ++result below
             while (result < Convert.ToByte('9'))
                 yield return ++result;
 
@@ -157,6 +164,22 @@ namespace MD5
             result = (byte)(Convert.ToByte('a') - 1);
             while (result < Convert.ToByte('z'))
                 yield return ++result;
+        }
+        public IEnumerable<byte[]> GenerateAny(int len)
+        {
+            if (len == 0)
+            {
+                yield return new byte[0];
+                yield break;
+            }
+            foreach (var one in GenerateAny(len - 1))
+            foreach (var single in Values())
+            {
+                var two = new byte[one.Length + 1]; 
+                Array.Copy(one, two, one.Length);
+                two[^1] = single;
+                    yield return two;
+            }
         }
         public IEnumerable<byte[]> Generate1()
         {
